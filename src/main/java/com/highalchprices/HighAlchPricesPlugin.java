@@ -16,7 +16,7 @@ import net.runelite.client.util.QuantityFormatter;
 
 @Slf4j
 @PluginDescriptor(
-	name = "High Alch Guide",
+	name = "High Alch Checker",
 		description = "A plugin to add alch value to price checker",
 		tags = {"high", "alch", "price", "checker"}
 )
