@@ -14,11 +14,14 @@ import net.runelite.client.game.ItemManager;
 import net.runelite.api.ItemContainer;
 import net.runelite.client.util.QuantityFormatter;
 
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
 @Slf4j
 @PluginDescriptor(
-	name = "High Alch Checker",
-		description = "A plugin to add alch value to price checker",
-		tags = {"high", "alch", "price", "checker"}
+	name = "Text Changers",
+		description = "A plugin to change various texts on the client",
+		tags = {"high", "alch", "price", "checker", "text", "change", "time"}
 )
 public class HighAlchPricesPlugin extends Plugin
 {
@@ -44,8 +47,7 @@ public class HighAlchPricesPlugin extends Plugin
 				return itemManager.getItemComposition(itemId).getHaPrice();
 		}
 	}
-
-	private String createText(long alchValue)
+	private String createHighAlchText(long alchValue)
 	{
 		StringBuilder sb = new StringBuilder();
 		sb.append(" <col=ffffff>(HA: ");
@@ -64,17 +66,51 @@ public class HighAlchPricesPlugin extends Plugin
 			alchValue += getHaPrice(i.getId()) * i.getQuantity();
 		}
 		Widget textWidget = client.getWidget(464, 12);
-		textWidget.setText(textWidget.getText() + createText(alchValue));
+		textWidget.setText(textWidget.getText() + createHighAlchText(alchValue));
 
+	}
+	private int calcHours(String s)
+	{
+		String days = "";
+		String hours = "";
+		Pattern pat = Pattern.compile("\\d+ ");
+		Matcher mat = pat.matcher(s);
+		while (mat.find())
+		{
+			if (days == ""){days = mat.group();}
+			else if (hours == ""){hours = mat.group();}
+
+		}
+		int daysInt = Integer.parseInt(days.trim()) * 24;
+		int hoursInt = Integer.parseInt(hours.trim());
+
+		return(daysInt + hoursInt);
+	}
+
+	public void updatePlayTime()
+	{
+		Widget base = client.getWidget(712, 2);
+		if (base.isHidden()) {return;} // the base widget isn't shown so abort here
+		Widget[] children = base.getChildren();
+		Widget textWidget = children[100];
+		if (textWidget.isHidden() == false)
+		{
+			int updateHours = calcHours(textWidget.getText());
+			textWidget.setText("Time Played: <col=0dc10d>" + updateHours + " Hours</col>");
+		}
 	}
 
 	@Subscribe
 	public void onItemContainerChanged(ItemContainerChanged event)
 	{
-		int containerID = event.getContainerId();
-		if (containerID == 90) {
+		if (event.getContainerId() == 90 && config.highAlchPrices()) {
 			addHighAlchText();
 		}
+	}
+	@Subscribe
+	public void onClientTick(ClientTick event)
+	{
+		if (config.updatePlayTime()){updatePlayTime();}
 	}
 
 	@Provides
